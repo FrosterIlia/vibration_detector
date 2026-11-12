@@ -9,6 +9,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 
+#include "../../Lib/adxl345/src/driver_adxl345.h"
+
 #include "adxl_sampling_task.h"
 
 

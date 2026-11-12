@@ -46,12 +46,17 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/app.c
     App/Src/adxl_sampling_task.c
+    Lib/adxl345/src/driver_adxl345.c
+    Lib/adxl345/interface/driver_adxl345_interface_template.c
     # Add user sources here
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     App/Inc
+    Lib/adxl345
+    Lib/adxl345/src
+    Lib/adxl345/interface
     # Add user defined include paths
 )
 
