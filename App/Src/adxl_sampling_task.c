@@ -1,12 +1,4 @@
 #include "adxl_sampling_task.h"
-#include "driver_adxl345.h"
-#include "driver_adxl345_interface.h"
-#include "main.h"
-#include "portmacro.h"
-#include "projdefs.h"
-#include "stm32f767xx.h"
-#include "stm32f7xx_hal_gpio.h"
-#include <stdio.h>
 
 TaskHandle_t adxl_sampling_task_handler;
 
@@ -58,7 +50,6 @@ void adxl_sampling_task(void *argument)
 
   for (;;)
   {
-    HAL_GPIO_TogglePin(GPIOB, LD1_Pin);
     ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
     len = 32;
