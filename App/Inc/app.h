@@ -8,6 +8,7 @@
 #include "gpio.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 #include "../../Lib/adxl345/src/driver_adxl345.h"
 

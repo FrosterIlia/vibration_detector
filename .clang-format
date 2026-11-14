@@ -1,3 +1,5 @@
 BasedOnStyle: LLVM
-IndentWidth: 2
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
 BreakBeforeBraces: Allman

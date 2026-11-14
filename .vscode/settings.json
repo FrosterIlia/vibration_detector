@@ -15,6 +15,14 @@
     "[c]": {
         "editor.defaultFormatter": "stmicroelectronics.stm32cube-ide-clangd",
         "editor.formatOnSave": true,
-        "editor.formatOnSaveMode": "modifications"
+        "editor.formatOnSaveMode": "modifications",
+        "editor.insertSpaces": false,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+    },
+    "[cpp]": {
+        "editor.insertSpaces": false,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
     }
 }
