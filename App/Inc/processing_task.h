@@ -18,10 +18,14 @@
 #include "stm32f7xx_hal_gpio.h"
 #include <stdio.h>
 
+#include "arm_math.h"
+
 #define N_BLOCKS 4
 #define BLOCK_SAMPLES 2048
 
 extern TaskHandle_t processing_task_handler;
+
+extern arm_rfft_fast_instance_f32 fft;
 
 typedef struct {
     int16_t  x[BLOCK_SAMPLES], y[BLOCK_SAMPLES], z[BLOCK_SAMPLES];

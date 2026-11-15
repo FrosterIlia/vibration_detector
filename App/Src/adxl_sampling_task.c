@@ -88,11 +88,6 @@ void adxl_sampling_task(void *argument)
 					sample_index = 0;
 				}
 			}
-			// int n = snprintf(msg, sizeof(msg),
-			//                  "%u samples, x=%d y=%d z=%d mg\r\n", len,
-			//                  (int)(g[0][0] * 1000), (int)(g[0][1] * 1000),
-			//                  (int)(g[0][2] * 1000));
-			// HAL_UART_Transmit(&huart3, (const uint8_t *)msg, n, 100);
 		}
 	}
 }
