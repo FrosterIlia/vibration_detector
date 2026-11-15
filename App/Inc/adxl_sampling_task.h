@@ -19,9 +19,6 @@
 
 #define ACCEL_WATERMARK_LEVEL 16
 
-#define UART_PRINT(str) \
-	HAL_UART_Transmit(&huart3, (const uint8_t *)(str), sizeof(str) - 1, 100)
-
 
 extern TaskHandle_t adxl_sampling_task_handler;
 

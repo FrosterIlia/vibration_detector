@@ -1,3 +1,4 @@
+#include "app.h"
 #include "adxl_sampling_task.h"
 #include "portmacro.h"
 #include "processing_task.h"
@@ -56,7 +57,7 @@ void adxl_sampling_task(void *argument)
 	uint16_t sample_index = 0;
 	if (xQueueReceive(empty_sample_queue, &current_block_index, 0) != pdPASS)
 	{
-		UART_PRINT("ERR: no empty block at start\r\n");
+		log_printf("ERR: no empty block at start");
 	}
 
 	for (;;)
@@ -78,14 +79,30 @@ void adxl_sampling_task(void *argument)
 					if (xQueueSend(full_sample_queue, &current_block_index, 0) !=
 					    pdTRUE)
 					{
-						UART_PRINT("ERR: full queue send failed\r\n");
+						log_printf("ERR: full queue send failed");
 					}
 					if (xQueueReceive(empty_sample_queue, &current_block_index,
 					                  0) != pdPASS)
 					{
-						UART_PRINT("ERR: no empty block available\r\n");
+						log_printf("ERR: no empty block available");
 					}
 					sample_index = 0;
+				}
+
+				// TEST (mutex): log every 64 samples (~20 ms) so these lines
+				// regularly collide with the processing task's long log line.
+				// If log_printf took >= 4 ticks, we were blocked on the mutex.
+				if (sample_index % 64 == 0)
+				{
+					TickType_t t0 = xTaskGetTickCount();
+					log_printf("S blk=%u idx=%u", current_block_index,
+					           sample_index);
+					TickType_t waited = xTaskGetTickCount() - t0;
+					if (waited >= 4)
+					{
+						log_printf("S ^ waited %lu ms for mutex",
+						           (unsigned long)waited);
+					}
 				}
 			}
 		}
