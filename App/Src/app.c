@@ -1,5 +1,6 @@
 #include "app.h"
 #include "adxl_sampling_task.h"
+#include "pi_comm_task.h"
 #include "processing_task.h"
 #include <stdarg.h>
 #include <stdbool.h>

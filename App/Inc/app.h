@@ -15,8 +15,6 @@
 
 #include "adxl_sampling_task.h"
 
-
-
 void app_init();
 
 extern SemaphoreHandle_t log_mutex;
