@@ -5,6 +5,7 @@
 #include "portmacro.h"
 #include "projdefs.h"
 #include "stm32f7xx_hal_gpio.h"
+#include <string.h>
 
 TaskHandle_t processing_task_handler;
 
@@ -93,6 +94,7 @@ void process_block(uint8_t current_block_index, uint8_t prev_block_index)
 			psd_sums[axis][k] += re * re + im * im;
 		}
 	}
+	++n_segments;
 }
 
 void processing_init(void)
@@ -112,12 +114,16 @@ void processing_init(void)
 
 bool psd_finalize(float32_t out[3][N_BINS], float32_t sampling_freq)
 {
-	if (n_segments == 0) return false;   
+	if (n_segments == 0)
+		return false;
 	float32_t scale = 1.0f / (sampling_freq * hann_power * n_segments);
-	for (int axis = 0; axis < AXIS_NUMBER; axis++) {
-		for (uint32_t k = 0; k < N_BINS; k++) {
-			float32_t v = psd_acc[axis][k] * scale;
-			if (k != 0 && k != N_FFT / 2) v *= 2.0f;   // one-sided
+	for (int axis = 0; axis < AXIS_NUMBER; axis++)
+	{
+		for (uint32_t k = 0; k < N_BINS; k++)
+		{
+			float32_t v = psd_sums[axis][k] * scale;
+			if (k != 0 && k != N_FFT / 2)
+				v *= 2.0f; // one-sided
 			out[axis][k] = v;
 		}
 	}

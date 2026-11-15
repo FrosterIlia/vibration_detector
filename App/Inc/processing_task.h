@@ -16,6 +16,7 @@
 #include "projdefs.h"
 #include "stm32f767xx.h"
 #include "stm32f7xx_hal_gpio.h"
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "arm_math.h"
