@@ -49,6 +49,8 @@ include(StatisticsFunctions/Config.cmake)
 
 include(TransformFunctions/Config.cmake)
 
+include(WindowFunctions/Config.cmake)
+
 include(CommonTables/Config.cmake)
 
 ### Includes

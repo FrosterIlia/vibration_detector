@@ -23,9 +23,12 @@
 #define N_BLOCKS 4
 #define BLOCK_SAMPLES 2048
 
-extern TaskHandle_t processing_task_handler;
+#define N_FFT 4096
+#define N_BINS (N_FFT / 2 + 1)
 
-extern arm_rfft_fast_instance_f32 fft;
+#define AXIS_NUMBER 3
+
+extern TaskHandle_t processing_task_handler;
 
 typedef struct {
     int16_t  x[BLOCK_SAMPLES], y[BLOCK_SAMPLES], z[BLOCK_SAMPLES];
@@ -38,6 +41,8 @@ extern QueueHandle_t full_sample_queue;
 
 void processing_task(void *argument);
 
-void process_block(uint8_t block_index);
+void process_block(uint8_t current_block_index, uint8_t prev_block_index);
+void processing_init(void);
+bool psd_finalize(float32_t out[3][N_BINS], float32_t fs);
 
 #endif
