@@ -12,7 +12,7 @@
 
 // COMM COMMANDS
 const uint8_t START_READY = 'S';
-const uint8_t START_GO = 'S';
+const uint8_t START_GO = 'G';
 const uint8_t STOP = 'P';
 const uint8_t REQ_LEN = 'L';
 const uint8_t REQ_PSD = 'D';
@@ -55,6 +55,7 @@ void pi_comm_task(void *argument)
 					//do a task notification to start recording
 
 					}
+					else Uart_Send(&NACK,1);
 				}
 				else
 					Uart_Send(&NACK,1); 
@@ -103,6 +104,7 @@ void pi_comm_task(void *argument)
 void Uart_Init(void)
 {
 	rxQueue = xQueueCreate(256, sizeof(uint8_t));
+	//configASSERT(rxQueue); // NULL = FreeRTOS heap is full (raise configTOTAL_HEAP_SIZE)
 	// Receive one byte by interrupt into rx_byte. HAL_UART_RxCpltCallback
 	// queues it and re-arms for the next one.
 	HAL_UART_Receive_IT(&huart6, &rx_byte, 1);
@@ -145,17 +147,17 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 HAL_StatusTypeDef Uart_Send(const void *data, uint16_t len)
 {
 	//timeout calculations (with buffer)
-	uint32_t tx_MS = ((uint32_t)len * 10) * huart6.Init.BaudRate * 1000; //theoretical tx time in MS
+	uint32_t tx_MS = ((uint32_t)len * 10 * 1000) / huart6.Init.BaudRate; //theoretical tx time in MS
 	TickType_t timeout = tx_MS * 2 + 10; // +10 accounts for transfers < 1 ms
 
-	//ulTaskNotifyTake(pdTRUE,0); // clears stale count
+	ulTaskNotifyTake(pdTRUE,0); // clears stale "transmit done" signals
 
 	HAL_StatusTypeDef status = HAL_UART_Transmit_IT(&huart6, (const uint8_t *)data, len);
 	if (status == HAL_OK)
 	{
 		if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(timeout)) == 0) // if fails
 		{
-
+			HAL_UART_AbortTransmit_IT(&huart6);
 			status = HAL_TIMEOUT; 
 		}
 	}
