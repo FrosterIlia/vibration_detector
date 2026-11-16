@@ -26,5 +26,8 @@
         "editor.tabSize": 4,
         "editor.detectIndentation": false
 	},
-	"git.ignoreLimitWarning": true
+	"git.ignoreLimitWarning": true,
+	"python.analysis.extraPaths": [
+		"${workspaceFolder}/../klipper/klippy"
+	]
 }
