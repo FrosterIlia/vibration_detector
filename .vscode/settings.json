@@ -1,4 +1,5 @@
 {
+    "cmake.sourceDirectory": "${workspaceFolder}/firmware",
     "cmake.cmakePath": "cube-cmake",
     "cmake.configureArgs": [
         "-DCMAKE_COMMAND=cube-cmake"
@@ -24,5 +25,6 @@
         "editor.insertSpaces": false,
         "editor.tabSize": 4,
         "editor.detectIndentation": false
-    }
+	},
+	"git.ignoreLimitWarning": true
 }
