@@ -13,7 +13,17 @@ if TYPE_CHECKING:
 class ResonanceMapper:
     def __init__(self, config: ConfigWrapper):
         self.printer: Printer = config.get_printer()
-        self.grid = ScanGrid(config)
+        stepper_x = config.getsection('stepper_x')
+        stepper_y = config.getsection('stepper_y')
+        min_x = stepper_x.getfloat('position_min', 0.)
+        max_x = stepper_x.getfloat('position_max')
+        min_y = stepper_y.getfloat('position_min', 0.)
+        max_y = stepper_y.getfloat('position_max')
+        points_per_axis = config.getint('points_per_axis', 5, minval=2)
+        try:
+            self.grid = ScanGrid(min_x, min_y, max_x, max_y, points_per_axis)
+        except ValueError as e:
+            raise config.error(f"resonance_mapper: {e}")
         self.speed = config.getfloat('speed', 100., above=0.)
         self.settle_time = config.getfloat('settle_time', 0.5, minval=0.)
         gcode: GCodeDispatch = self.printer.lookup_object('gcode')
