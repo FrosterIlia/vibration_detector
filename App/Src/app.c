@@ -1,9 +1,12 @@
 #include "app.h"
+#include "FreeRTOS.h"
 #include "adxl_sampling_task.h"
 #include "pi_comm_task.h"
 #include "processing_task.h"
+#include "stm32f7xx_hal_uart.h"
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 QueueHandle_t empty_sample_queue;
@@ -28,6 +31,8 @@ void app_init(void)
 	            tskIDLE_PRIORITY + 5, &adxl_sampling_task_handler);
 	xTaskCreate(processing_task, "ProcessingTask", 1024, NULL,
 	            tskIDLE_PRIORITY + 2, &processing_task_handler);
+	xTaskCreate(pi_comm_task, "PiCommTask", 1024, NULL, tskIDLE_PRIORITY + 1,
+	            &pi_comm_task_handler);
 }
 
 int __io_putchar(int ch)

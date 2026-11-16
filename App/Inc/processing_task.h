@@ -9,6 +9,7 @@
 #include "queue.h"
 
 #include "adxl_sampling_task.h"
+#include "pi_comm_task.h"
 #include "driver_adxl345.h"
 #include "driver_adxl345_interface.h"
 #include "main.h"
