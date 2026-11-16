@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from extras.resonance_tester import (
+    ResonanceTestExecutor, SweepingVibrationsTestGenerator, TestAxis)
 from .grid import ScanGrid
 
 if TYPE_CHECKING:
@@ -28,6 +30,8 @@ class ResonanceMapper:
             raise config.error(f"resonance_mapper: {e}")
         self.speed = config.getfloat('speed', 100., above=0.)
         self.settle_time = config.getfloat('settle_time', 0.5, minval=0.)
+        self.test_generator = SweepingVibrationsTestGenerator(config)
+        self.test_executor = ResonanceTestExecutor(config)
         gcode: GCodeDispatch = self.printer.lookup_object('gcode')
         gcode.register_command('MAP_HELLO', self.cmd_MAP_HELLO,
                                desc="Check resonance_mapper is loaded")
@@ -70,6 +74,11 @@ class ResonanceMapper:
         gcmd.respond_info(f"point {n}/{total} at ({x:.2f}, {y:.2f})")
         reactor = self.printer.get_reactor()
         reactor.pause(reactor.monotonic() + self.settle_time)
+        for axis in ('x', 'y'):
+            self.test_generator.prepare_test(gcmd, is_z=False)
+            test_seq = self.test_generator.gen_test()
+            self.test_executor.run_test(test_seq, TestAxis(axis), gcmd)
+            toolhead.wait_moves()
 
 
 def load_config(config: ConfigWrapper):
