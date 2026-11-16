@@ -20,8 +20,10 @@ class ResonanceMapper:
         min_y = stepper_y.getfloat('position_min', 0.)
         max_y = stepper_y.getfloat('position_max')
         points_per_axis = config.getint('points_per_axis', 5, minval=2)
+        margin = config.getfloat('margin', 10., minval=0.)
         try:
-            self.grid = ScanGrid(min_x, min_y, max_x, max_y, points_per_axis)
+            self.grid = ScanGrid(min_x, min_y, max_x, max_y,
+                                 points_per_axis, margin)
         except ValueError as e:
             raise config.error(f"resonance_mapper: {e}")
         self.speed = config.getfloat('speed', 100., above=0.)
