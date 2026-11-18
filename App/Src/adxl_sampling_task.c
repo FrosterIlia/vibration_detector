@@ -75,12 +75,14 @@ void adxl_sampling_task(void *argument)
 		}
 		was_running = running; 
 
-		if (!running)	//ignore buffer code if Event group isnt set
-			continue;
+		
 
 		len = 32;
 		if (adxl345_read(&adxl_handle, raw, g, &len) == 0)
 		{
+
+			if (!running)	//ignore buffer code if Event group isnt set
+
 			for (uint8_t i = 0; i < len; i++)
 			{
 				pool[current_block_index].x[sample_index] = (int)(g[i][0] * 1000);

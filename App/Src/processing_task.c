@@ -40,7 +40,7 @@ void processing_task(void *argument)
 	for (;;)
 	{
 		if (xQueueReceive(full_sample_queue, &current_block_index,
-		                  pdMS_TO_TICKS(100)) != pdTRUE)
+		                  pdMS_TO_TICKS(1000)) != pdTRUE)
 		{
 			log_printf("ERR: full queue receive failed");
 		}

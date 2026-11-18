@@ -17,8 +17,7 @@
 #define SEND_NACK Uart_Send(&NACK, 1)
 
 // COMM COMMANDS
-const uint8_t START_READY = 'S';
-const uint8_t START_GO = 'G';
+const uint8_t START = 'S';
 const uint8_t STOP = 'P';
 const uint8_t REQ_LEN = 'L';
 const uint8_t REQ_PSD = 'D';
@@ -48,75 +47,51 @@ void pi_comm_task(void *argument)
 		switch (state)
 		{
 		case IDLE:
-			if (rec_byte == START_READY) 
+			if (rec_byte == START) 
 			{
+				xEventGroupSetBits(sys_events, EVT_RUN);
+				state = MEASURING;
 				SEND_ACK;
-				if (Q_REC && rec_byte == START_GO) // wait 2 seconds for reply, no reply = back to idle
-				{
-					state = MEASURING;
-					SEND_ACK;
-				}
-				else
-					SEND_NACK; 
 			}
-			else
-				SEND_NACK;
+			else SEND_NACK;
 			
 			break;
 		case MEASURING:
-
-			xEventGroupSetBits(sys_events, EVT_RUN);
-
 			//Block Until PI says to stop
 			// receive UART from PI
-			Q_REC_MAX;
 
 			if (rec_byte == STOP)
 			{
 				SEND_ACK;
 				xEventGroupSetBits(sys_events, EVT_STOP);	//clear event group
+				
+				//wait for data to to transfer set to max for now, but
+				xEventGroupWaitBits(sys_events, EVT_DATA, pdTRUE, pdTRUE, portMAX_DELAY); 
 				state = REPORTING;
 			}	
-			else
-				SEND_NACK;		
-			
-			//	wait for pi to tell stm to send the length of psd
-			//		send ACK
-			//		pi_comm_task reads the queue
-			//		pi_comm_task sends the psd length
-			//	pi asks for the psd
-			//		send ack
-			//  stm sends psd
-			//	wait for pi to send clear
-			//		send ACK
-			//  clear
-
-				break;
+			else SEND_NACK;
+						
+			break;
 		case REPORTING:
-			//wait for data to to transfer set to max for now, but
-			xEventGroupWaitBits(sys_events, EVT_DATA, pdTRUE, pdTRUE, portMAX_DELAY); 
-
-			if (Q_REC && rec_byte == REQ_LEN)
+			size_t psd_size = get_size_psd();
+			if (rec_byte == REQ_LEN)
 			{
-				size_t psd_size = get_size_psd();
 				Uart_Send(&psd_size, (uint32_t)sizeof(psd_size));	//send length
-
-				if (Q_REC && rec_byte == REQ_PSD)
-				{
-					Uart_Send(&psd_out, psd_size);	//send PSD
-					if (Q_REC && rec_byte == CLEAR)
-					{
-						SEND_ACK;
-						xEventGroupSetBits(sys_events, EVT_CLEAR);
-						xEventGroupClearBits(sys_events, EVT_STOP);	 //clear stop flag
-						state = IDLE;
-					}
-					else 
-						SEND_NACK;
-				}
-				else
-					SEND_NACK;
+			}	
+			else if (rec_byte == REQ_PSD)
+			{
+				Uart_Send(&psd_out, psd_size);	//send PSD
 			}
+			else if (rec_byte == CLEAR)
+			{
+				SEND_ACK;
+				xEventGroupClearBits(sys_events, EVT_STOP);	 //clear stop flag
+				xEventGroupSetBits(sys_events, EVT_CLEAR);
+	
+				state = IDLE;
+			}
+			else SEND_NACK;
+			
 		break;
 		}
 	}
