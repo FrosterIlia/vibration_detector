@@ -29,6 +29,11 @@ CLEAR = b"C"
 ACK = b"A"
 NACK = b"N"
 
+# PSD settings (must match the STM: SAMPLING_RATE, N_FFT)
+FS = 3200
+N_FFT = 4096
+HZ_PER_BIN = FS / N_FFT     # 0.78125 Hz
+
 
 def send(ser, byte, msg_len):
     ser.write(byte)
@@ -89,17 +94,39 @@ def get_psd(ser):
 
     print("PSD Succsefully transferred")
     print("\nLength = " + str(length))
-    print("Printing PSD Array...: ")
-
-    time.sleep(3)
-
-    print(psd)
+    print_histogram(psd)
 
     return psd, length
 
 
+def print_histogram(psd, n_bands=32, width=50):
+    # groups the PSD bins into n_bands frequency bands and prints a bar per band
+    # bin 0 (DC / gravity) is skipped so it doesnt swamp everything else
+    for axis, name in enumerate(["X", "Y", "Z"]):
+        bins = psd[axis][1:]
+        per_band = len(bins) // n_bands
+
+        bands = []
+        for b in range(n_bands):
+            bands.append(sum(bins[b * per_band:(b + 1) * per_band]))
+
+        peak = max(bands)
+        if peak <= 0:
+            peak = 1
+
+        peak_bin = bins.index(max(bins)) + 1
+        print("\n" + name + " axis  (peak bin at " + f"{peak_bin * HZ_PER_BIN:.1f}" + " Hz)")
+
+        for b in range(n_bands):
+            f_lo = (1 + b * per_band) * HZ_PER_BIN
+            f_hi = (1 + (b + 1) * per_band) * HZ_PER_BIN
+            bar = "#" * int(bands[b] / peak * width)
+            print(f"{f_lo:7.1f}-{f_hi:7.1f} Hz | {bar:<{width}} {bands[b]:.3g}")
+
+
 def interactive(ser):
-    print("Commands: s = start handshake, p = stop, r <char> = raw byte, q = quit, l = get_psd")
+    print("Commands: s = start handshake, p = stop, r <char> = raw byte, q = quit, l = get_psd, h = redraw histogram")
+    last_psd = None
     while True:
         try:
             cmd = input("> ").strip()
@@ -110,7 +137,14 @@ def interactive(ser):
         elif cmd == "p":
             stop(ser)
         elif cmd == "l":
-            get_psd(ser)
+            result = get_psd(ser)
+            if result:
+                last_psd = result[0]
+        elif cmd == "h":
+            if last_psd:
+                print_histogram(last_psd)
+            else:
+                print("No PSD yet, run l first")
         elif cmd.startswith("r ") and len(cmd) >= 3:
             send(ser, cmd[2].encode(), 1)
         elif cmd == "q":
