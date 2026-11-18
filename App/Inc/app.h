@@ -10,6 +10,7 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "event_groups.h"
 
 #include "../../Lib/adxl345/src/driver_adxl345.h"
 
@@ -18,6 +19,13 @@
 void app_init();
 
 extern SemaphoreHandle_t log_mutex;
+
+extern EventGroupHandle_t sys_events; 
+
+#define EVT_RUN (1u << 0)
+#define EVT_STOP (1u << 1)
+#define EVT_DATA (1u << 2)
+#define EVT_CLEAR (1u << 3)
 
 // Thread-safe printf to UART3, prefixed with the tick count and ending in
 // "\r\n". Must not be called from an ISR.

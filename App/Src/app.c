@@ -13,10 +13,14 @@ QueueHandle_t empty_sample_queue;
 QueueHandle_t full_sample_queue;
 SemaphoreHandle_t log_mutex;
 
+EventGroupHandle_t sys_events;
+
 void app_init(void)
 {
 	// Created first so it exists before any task can log
 	log_mutex = xSemaphoreCreateMutex();
+
+	sys_events = xEventGroupCreate(); 
 
 	// These queues store indexes of the blocks inside the pool
 	empty_sample_queue = xQueueCreate(N_BLOCKS, sizeof(uint8_t));

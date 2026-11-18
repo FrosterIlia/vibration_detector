@@ -19,7 +19,7 @@
 #include <stdio.h>
 
 #define ACCEL_WATERMARK_LEVEL 16
-
+#define SAMPLING_RATE 3200
 
 extern TaskHandle_t adxl_sampling_task_handler;
 

@@ -1,5 +1,6 @@
 #include "pi_comm_task.h"
 
+#include "cmsis_os.h"
 #include "portmacro.h"
 #include "processing_task.h" // N_BINS, AXIS_NUMBER, float32_t
 #include "app.h"             // log_printf
@@ -10,12 +11,18 @@
 
 #include <string.h>
 
+#define Q_REC (xQueueReceive(rxQueue, &rec_byte, pdMS_TO_TICKS(2000)) == pdTRUE)
+#define Q_REC_MAX xQueueReceive(rxQueue, &rec_byte, portMAX_DELAY)
+#define SEND_ACK Uart_Send(&ACK, 1)
+#define SEND_NACK Uart_Send(&NACK, 1)
+
 // COMM COMMANDS
 const uint8_t START_READY = 'S';
 const uint8_t START_GO = 'G';
 const uint8_t STOP = 'P';
 const uint8_t REQ_LEN = 'L';
 const uint8_t REQ_PSD = 'D';
+const uint8_t CLEAR = 'C';
 const uint8_t ACK = 'A';
 const uint8_t NACK = 'N';
 
@@ -36,70 +43,85 @@ void pi_comm_task(void *argument)
 	for (;;)
 	{
 		// receive UART from PI
-		xQueueReceive(rxQueue, &rec_byte, portMAX_DELAY);
+		Q_REC_MAX;
 
 		switch (state)
 		{
 		case IDLE:
-			if (rec_byte == START_READY) // START is the string "S"; [0] is 'S'
+			if (rec_byte == START_READY) 
 			{
-				Uart_Send(&ACK, 1); // ack
-				if (xQueueReceive(rxQueue, &rec_byte,
-				                  pdMS_TO_TICKS(2000)) == pdTRUE) // wait 2 seconds for reply, no reply = back to idle
+				SEND_ACK;
+				if (Q_REC && rec_byte == START_GO) // wait 2 seconds for reply, no reply = back to idle
 				{
-					if (rec_byte == START_GO)
-					{
 					state = MEASURING;
-					Uart_Send(&ACK,1);
-
-					//do a task notification to start recording
-
-					}
-					else Uart_Send(&NACK,1);
+					SEND_ACK;
 				}
 				else
-					Uart_Send(&NACK,1); 
+					SEND_NACK; 
 			}
 			else
-				Uart_Send(&NACK, sizeof(uint8_t));
+				SEND_NACK;
 			
 			break;
 		case MEASURING:
 
-		state = IDLE;
-		//if comm = stop
-		//	send acknowledge
-		//	stop recording (send another task notification)
-		//		run psd_finalize
-		//		add psd_finalize to a queue
-		//	wait for pi to tell stm to send the length of psd
-		//		send ACK
-		//		pi_comm_task reads the queue
-		//		pi_comm_task sends the psd length
-		//	pi asks for the psd
-		//		send ack
-		//  stm sends psd
-		//	wait for pi to send clear
-		//		send ACK
-		//  clear
+			xEventGroupSetBits(sys_events, EVT_RUN);
 
-			break;
+			//Block Until PI says to stop
+			// receive UART from PI
+			Q_REC_MAX;
+
+			if (rec_byte == STOP)
+			{
+				SEND_ACK;
+				xEventGroupSetBits(sys_events, EVT_STOP);	//clear event group
+				state = REPORTING;
+			}	
+			else
+				SEND_NACK;		
+			
+			//	wait for pi to tell stm to send the length of psd
+			//		send ACK
+			//		pi_comm_task reads the queue
+			//		pi_comm_task sends the psd length
+			//	pi asks for the psd
+			//		send ack
+			//  stm sends psd
+			//	wait for pi to send clear
+			//		send ACK
+			//  clear
+
+				break;
 		case REPORTING:
-			break;
+			//wait for data to to transfer set to max for now, but
+			xEventGroupWaitBits(sys_events, EVT_DATA, pdTRUE, pdTRUE, portMAX_DELAY); 
+
+			if (Q_REC && rec_byte == REQ_LEN)
+			{
+				size_t psd_size = get_size_psd();
+				Uart_Send(&psd_size, (uint32_t)sizeof(psd_size));	//send length
+
+				if (Q_REC && rec_byte == REQ_PSD)
+				{
+					Uart_Send(&psd_out, psd_size);	//send PSD
+					if (Q_REC && rec_byte == CLEAR)
+					{
+						SEND_ACK;
+						xEventGroupSetBits(sys_events, EVT_CLEAR);
+						xEventGroupClearBits(sys_events, EVT_STOP);	 //clear stop flag
+						state = IDLE;
+					}
+					else 
+						SEND_NACK;
+				}
+				else
+					SEND_NACK;
+			}
+		break;
 		}
-
-		// If picomm = start_rec
-		// set binary semaphore tlling processing task to start
-
-		// if picomm = stop_rec
-		// run the finalize psd,
-		// add the psd to a queue
-		// pi_comm_task reads the queue, sends over UART
-
-		// if picomm = clear
-		// clear all data in fft side
 	}
 }
+
 
 void Uart_Init(void)
 {
