@@ -53,6 +53,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/app.c
     App/Src/adxl_sampling_task.c
 	App/Src/processing_task.c
+    App/Src/pi_comm_task.c
     Lib/adxl345/src/driver_adxl345.c
     Lib/adxl345/interface/driver_adxl345_interface_template.c
     # Add user sources here

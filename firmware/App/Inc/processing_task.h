@@ -9,6 +9,7 @@
 #include "queue.h"
 
 #include "adxl_sampling_task.h"
+#include "pi_comm_task.h"
 #include "driver_adxl345.h"
 #include "driver_adxl345_interface.h"
 #include "main.h"
@@ -30,6 +31,8 @@
 #define AXIS_NUMBER 3
 
 extern TaskHandle_t processing_task_handler;
+extern float32_t psd_out[3][N_BINS]; //allocate memory for psd (global)
+//only two tasks access this, so a global is okay here
 
 typedef struct {
     int16_t  x[BLOCK_SAMPLES], y[BLOCK_SAMPLES], z[BLOCK_SAMPLES];
@@ -45,5 +48,7 @@ void processing_task(void *argument);
 void process_block(uint8_t current_block_index, uint8_t prev_block_index);
 void processing_init(void);
 bool psd_finalize(float32_t out[3][N_BINS], float32_t fs);
+void psd_reset(void);
+size_t get_size_psd(void);
 
 #endif

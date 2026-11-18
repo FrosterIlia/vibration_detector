@@ -60,13 +60,29 @@ void adxl_sampling_task(void *argument)
 		log_printf("ERR: no empty block at start");
 	}
 
+
+	bool was_running = false;
+
 	for (;;)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
+		bool running = (xEventGroupGetBits(sys_events) & EVT_RUN) != 0; //was the event group triggered
+
+		if (running && !was_running)
+		{
+			sample_index = 0; 
+		}
+		was_running = running; 
+
+		
+
 		len = 32;
 		if (adxl345_read(&adxl_handle, raw, g, &len) == 0)
 		{
+
+			if (!running)	//ignore buffer code if Event group isnt set
+
 			for (uint8_t i = 0; i < len; i++)
 			{
 				pool[current_block_index].x[sample_index] = (int)(g[i][0] * 1000);
