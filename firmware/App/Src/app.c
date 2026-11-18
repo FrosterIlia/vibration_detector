@@ -1,18 +1,26 @@
 #include "app.h"
+#include "FreeRTOS.h"
 #include "adxl_sampling_task.h"
+#include "pi_comm_task.h"
 #include "processing_task.h"
+#include "stm32f7xx_hal_uart.h"
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 QueueHandle_t empty_sample_queue;
 QueueHandle_t full_sample_queue;
 SemaphoreHandle_t log_mutex;
 
+EventGroupHandle_t sys_events;
+
 void app_init(void)
 {
 	// Created first so it exists before any task can log
 	log_mutex = xSemaphoreCreateMutex();
+
+	sys_events = xEventGroupCreate(); 
 
 	// These queues store indexes of the blocks inside the pool
 	empty_sample_queue = xQueueCreate(N_BLOCKS, sizeof(uint8_t));
@@ -27,6 +35,8 @@ void app_init(void)
 	            tskIDLE_PRIORITY + 5, &adxl_sampling_task_handler);
 	xTaskCreate(processing_task, "ProcessingTask", 1024, NULL,
 	            tskIDLE_PRIORITY + 2, &processing_task_handler);
+	xTaskCreate(pi_comm_task, "PiCommTask", 1024, NULL, tskIDLE_PRIORITY + 1,
+	            &pi_comm_task_handler);
 }
 
 int __io_putchar(int ch)

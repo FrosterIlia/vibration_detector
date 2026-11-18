@@ -21,6 +21,8 @@ static float32_t fft_output[AXIS_NUMBER][N_FFT]; // FFT output
 static float32_t psd_sums[AXIS_NUMBER][N_BINS];  // running totals, one per axis
 static uint32_t n_segments;
 
+float32_t psd_out[3][N_BINS]; //allocate memory for psd (global)
+
 void processing_task(void *argument)
 {
 	processing_init();
@@ -38,13 +40,24 @@ void processing_task(void *argument)
 	for (;;)
 	{
 		if (xQueueReceive(full_sample_queue, &current_block_index,
-		                  portMAX_DELAY) != pdTRUE)
+		                  pdMS_TO_TICKS(1000)) != pdTRUE)
 		{
 			log_printf("ERR: full queue receive failed");
 		}
 		process_block(current_block_index, prev_block_index);
 		xQueueSend(empty_sample_queue, &prev_block_index, 0);
 		prev_block_index = current_block_index;
+
+		if (xEventGroupGetBits(sys_events) & EVT_STOP)
+		{
+			xEventGroupClearBits(sys_events, EVT_RUN);	//stop running system
+			psd_finalize(psd_out,(float32_t)SAMPLING_RATE);
+
+			xEventGroupSetBits(sys_events, EVT_DATA);
+
+			xEventGroupWaitBits(sys_events, EVT_CLEAR, pdTRUE, pdTRUE, portMAX_DELAY);	//wait for pi to call system clear
+			psd_reset();	//reset psd (not written yet)
+		}
 	}
 }
 
@@ -136,4 +149,16 @@ bool psd_finalize(float32_t out[3][N_BINS], float32_t sampling_freq)
 		}
 	}
 	return true;
+}
+
+//reset psd for next run
+void psd_reset(void)	
+{
+	memset(psd_sums, 0, sizeof(psd_sums));
+	n_segments = 0;
+}
+
+size_t get_size_psd (void)
+{
+	return sizeof(psd_out);
 }

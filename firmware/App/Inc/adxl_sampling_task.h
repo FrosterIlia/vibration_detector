@@ -8,6 +8,7 @@
 #include "usart.h"
 
 #include "adxl_sampling_task.h"
+#include "pi_comm_task.h"
 #include "driver_adxl345.h"
 #include "driver_adxl345_interface.h"
 #include "main.h"
@@ -18,7 +19,7 @@
 #include <stdio.h>
 
 #define ACCEL_WATERMARK_LEVEL 16
-
+#define SAMPLING_RATE 3200
 
 extern TaskHandle_t adxl_sampling_task_handler;
 
