@@ -5,3 +5,4 @@ mx.scratch
 .vscode/
 venv/
 __pycache__/
+resonance_data/
