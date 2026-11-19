@@ -81,7 +81,6 @@ class AccelerometerSerial:
         self._command(STOP, "STOP")
 
     def get_psd(self):
-        """Returns [psd_x, psd_y, psd_z], N_BINS floats each, in mg^2/Hz."""
         self._ensure_open()
         self.serial.reset_input_buffer()
 
