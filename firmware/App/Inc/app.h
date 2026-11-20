@@ -26,6 +26,8 @@ extern EventGroupHandle_t sys_events;
 #define EVT_STOP (1u << 1)
 #define EVT_DATA (1u << 2)
 #define EVT_CLEAR (1u << 3)
+#define EVT_CAPTURE (1u << 4)
+#define EVT_CAPTURE_DONE (1u << 5)
 
 // Thread-safe printf to UART3, prefixed with the tick count and ending in
 // "\r\n". Must not be called from an ISR.

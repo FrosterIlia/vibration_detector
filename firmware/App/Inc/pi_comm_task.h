@@ -18,6 +18,8 @@ typedef enum {
 	IDLE,	// start recording with accelerometer
 	MEASURING,	// stop recording with accelerometer
 	REPORTING,
+	CAPTURING,
+	REPORTING_RAW,
 } sys_state;
 
 extern TaskHandle_t pi_comm_task_handler;

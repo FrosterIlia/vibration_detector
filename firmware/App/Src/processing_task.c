@@ -111,13 +111,6 @@ void process_block(uint8_t current_block_index, uint8_t prev_block_index)
 		}
 	}
 	++n_segments;
-
-	// TEST (mutex): long line (~100 chars, ~9 ms on the wire) so the sampling
-	// task's frequent logs have something to collide with.
-	log_printf("P segment %lu done: mean mg x=%d y=%d z=%d "
-	           "|-- this line must never be split by sampler output --|",
-	           (unsigned long)n_segments, (int)mean[0], (int)mean[1],
-	           (int)mean[2]);
 }
 
 void processing_init(void)

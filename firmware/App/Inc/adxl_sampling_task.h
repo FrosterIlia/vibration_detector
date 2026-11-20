@@ -20,8 +20,12 @@
 
 #define ACCEL_WATERMARK_LEVEL 16
 #define SAMPLING_RATE 3200
+#define CAPTURE_MAX (SAMPLING_RATE * 10)
 
 extern TaskHandle_t adxl_sampling_task_handler;
+
+extern int16_t capture_buf[CAPTURE_MAX][3];
+extern uint32_t capture_count;
 
 void adxl_sampling_task(void *argument);
 

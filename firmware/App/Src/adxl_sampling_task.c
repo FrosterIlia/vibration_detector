@@ -6,13 +6,15 @@
 
 TaskHandle_t adxl_sampling_task_handler;
 
+int16_t capture_buf[CAPTURE_MAX][3];
+uint32_t capture_count;
+
 void adxl_sampling_task(void *argument)
 {
 	adxl345_handle_t adxl_handle;
 	int16_t raw[32][3];
 	float g[32][3];
 	uint16_t len = 16;
-	char msg[64];
 
 	DRIVER_ADXL345_LINK_INIT(&adxl_handle, adxl345_handle_t);
 	DRIVER_ADXL345_LINK_IIC_INIT(&adxl_handle, adxl345_interface_iic_init);
@@ -62,24 +64,41 @@ void adxl_sampling_task(void *argument)
 
 
 	bool was_running = false;
+	bool was_capturing = false;
 
 	for (;;)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-		bool running = (xEventGroupGetBits(sys_events) & EVT_RUN) != 0; //was the event group triggered
+		EventBits_t bits = xEventGroupGetBits(sys_events);
+		bool running = (bits & EVT_RUN) != 0; //was the event group triggered
+		bool capturing = (bits & EVT_CAPTURE) != 0;
 
 		if (running && !was_running)
 		{
-			sample_index = 0; 
+			sample_index = 0;
 		}
-		was_running = running; 
+		was_running = running;
 
-		
+		if (!capturing && was_capturing)
+		{
+			xEventGroupSetBits(sys_events, EVT_CAPTURE_DONE);
+		}
+		was_capturing = capturing;
 
 		len = 32;
 		if (adxl345_read(&adxl_handle, raw, g, &len) == 0)
 		{
+			if (capturing)
+			{
+				for (uint8_t i = 0; i < len && capture_count < CAPTURE_MAX; i++)
+				{
+					capture_buf[capture_count][0] = (int16_t)(g[i][0] * 1000);
+					capture_buf[capture_count][1] = (int16_t)(g[i][1] * 1000);
+					capture_buf[capture_count][2] = (int16_t)(g[i][2] * 1000);
+					capture_count++;
+				}
+			}
 
 			if (!running)	//ignore buffer code if Event group isnt set
 				continue;
@@ -103,22 +122,6 @@ void adxl_sampling_task(void *argument)
 						log_printf("ERR: no empty block available");
 					}
 					sample_index = 0;
-				}
-
-				// TEST (mutex): log every 64 samples (~20 ms) so these lines
-				// regularly collide with the processing task's long log line.
-				// If log_printf took >= 4 ticks, we were blocked on the mutex.
-				if (sample_index % 64 == 0)
-				{
-					TickType_t t0 = xTaskGetTickCount();
-					log_printf("S blk=%u idx=%u", current_block_index,
-					           sample_index);
-					TickType_t waited = xTaskGetTickCount() - t0;
-					if (waited >= 4)
-					{
-						log_printf("S ^ waited %lu ms for mutex",
-						           (unsigned long)waited);
-					}
 				}
 			}
 		}

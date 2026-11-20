@@ -24,6 +24,7 @@ const uint8_t REQ_PSD = 'D';
 const uint8_t CLEAR = 'C';
 const uint8_t ACK = 'A';
 const uint8_t NACK = 'N';
+const uint8_t CAPTURE = 'T';
 
 TaskHandle_t pi_comm_task_handler;
 
@@ -31,6 +32,19 @@ static volatile sys_state state = IDLE; // only access with a getter in other fi
 
 static QueueHandle_t rxQueue; // bytes received from the Pi (filled by the ISR)
 static uint8_t rx_byte;       // HAL writes each received byte here
+
+static void send_capture(void)
+{
+	const uint8_t *p = (const uint8_t *)capture_buf;
+	uint32_t left = capture_count * sizeof(capture_buf[0]);
+	while (left > 0)
+	{
+		uint16_t n = left > 60000 ? 60000 : left;
+		Uart_Send(p, n);
+		p += n;
+		left -= n;
+	}
+}
 
 
 //NOTE - ADD MUTEXES (NO MUTEXES ON UART YET)
@@ -51,6 +65,14 @@ void pi_comm_task(void *argument)
 			{
 				xEventGroupSetBits(sys_events, EVT_RUN);
 				state = MEASURING;
+				SEND_ACK;
+			}
+			else if (rec_byte == CAPTURE)
+			{
+				capture_count = 0;
+				xEventGroupClearBits(sys_events, EVT_CAPTURE_DONE);
+				xEventGroupSetBits(sys_events, EVT_CAPTURE);
+				state = CAPTURING;
 				SEND_ACK;
 			}
 			else SEND_NACK;
@@ -91,7 +113,34 @@ void pi_comm_task(void *argument)
 				state = IDLE;
 			}
 			else SEND_NACK;
-			
+
+		break;
+		case CAPTURING:
+			if (rec_byte == STOP)
+			{
+				xEventGroupClearBits(sys_events, EVT_CAPTURE);
+				xEventGroupWaitBits(sys_events, EVT_CAPTURE_DONE, pdTRUE, pdTRUE, pdMS_TO_TICKS(100));
+				state = REPORTING_RAW;
+				SEND_ACK;
+			}
+			else SEND_NACK;
+		break;
+		case REPORTING_RAW:
+			if (rec_byte == REQ_LEN)
+			{
+				uint32_t n = capture_count * sizeof(capture_buf[0]);
+				Uart_Send(&n, sizeof(n));
+			}
+			else if (rec_byte == REQ_PSD)
+			{
+				send_capture();
+			}
+			else if (rec_byte == CLEAR)
+			{
+				SEND_ACK;
+				state = IDLE;
+			}
+			else SEND_NACK;
 		break;
 		}
 	}

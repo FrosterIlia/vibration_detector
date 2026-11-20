@@ -7,6 +7,7 @@ import time
 from extras.resonance_tester import (
     ResonanceTestExecutor, SweepingVibrationsTestGenerator, TestAxis)
 from .grid import ScanGrid
+from .ringing import RingingTester
 
 from .sensor import (AccelerometerSerial, AccelerometerError,
                      HZ_PER_BIN, N_BINS)
@@ -47,6 +48,7 @@ class ResonanceMapper:
             self.printer.get_reactor(),
             config.get('serial_port', '/dev/serial0'),
             config.getint('baud', 115200, minval=9600))
+        self.ringing = RingingTester(config, self)
 
         gcode: GCodeDispatch = self.printer.lookup_object('gcode')
         gcode.register_command('MAP_HELLO', self.cmd_MAP_HELLO,
