@@ -39,6 +39,8 @@ void processing_task(void *argument)
 
 	for (;;)
 	{
+		xEventGroupWaitBits(sys_events, EVT_RUN, pdFALSE, pdTRUE, portMAX_DELAY); // wait for EVT_RUN
+
 		if (xQueueReceive(full_sample_queue, &current_block_index,
 		                  pdMS_TO_TICKS(1000)) != pdTRUE)
 		{
