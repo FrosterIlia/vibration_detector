@@ -72,7 +72,7 @@ class ResonanceMapper:
             raise gcmd.error(
                 "X and Y are not homed, run SET_KINEMATIC_POSITION first")
 
-        points = [self.grid.get_points()[0]]
+        points = [self.grid.get_points()[4]]
         xs = [p[0] for p in points]
         ys = [p[1] for p in points]
         gcmd.respond_info(f"{len(points)} points covering "
