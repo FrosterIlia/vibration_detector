@@ -20,10 +20,18 @@
         "editor.tabSize": 4,
         "editor.detectIndentation": false
     },
+    "[python]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+    },
     "[cpp]": {
         "editor.insertSpaces": false,
         "editor.tabSize": 4,
         "editor.detectIndentation": false
 	},
-	"git.ignoreLimitWarning": true
+	"git.ignoreLimitWarning": true,
+	"python.analysis.extraPaths": [
+		"${workspaceFolder}/../klipper/klippy"
+	]
 }

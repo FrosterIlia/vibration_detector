@@ -3,3 +3,6 @@ mx.scratch
 !.settings
 .settings/
 .vscode/
+venv/
+__pycache__/
+resonance_data/

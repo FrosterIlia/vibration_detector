@@ -63,7 +63,7 @@ void pi_comm_task(void *argument)
 			if (rec_byte == STOP)
 			{
 				SEND_ACK;
-				xEventGroupSetBits(sys_events, EVT_STOP);	//clear event group
+				xEventGroupSetBits(sys_events, EVT_STOP);
 				
 				//wait for data to to transfer set to max for now, but
 				xEventGroupWaitBits(sys_events, EVT_DATA, pdTRUE, pdTRUE, portMAX_DELAY); 

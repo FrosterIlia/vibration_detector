@@ -82,7 +82,7 @@ void adxl_sampling_task(void *argument)
 		{
 
 			if (!running)	//ignore buffer code if Event group isnt set
-
+				continue;
 			for (uint8_t i = 0; i < len; i++)
 			{
 				pool[current_block_index].x[sample_index] = (int)(g[i][0] * 1000);
@@ -121,6 +121,10 @@ void adxl_sampling_task(void *argument)
 					}
 				}
 			}
+		}
+		else
+		{
+			log_printf("Reading accelerometer failed");
 		}
 	}
 }

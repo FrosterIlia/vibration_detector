@@ -95,7 +95,18 @@ void HAL_SPI_MspInit(SPI_HandleTypeDef* spiHandle)
     HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SPI1_MspInit 1 */
+    /* Long (~1 m) wires to the ADXL345: slow the SCK (PA5) and MOSI (PD7) edges
+     * to cut ringing/crosstalk. Lowering the SPI baud rate does not change the
+     * edge rate; this does. Kept here so CubeMX regeneration does not undo it. */
+    GPIO_InitStruct.Pin = GPIO_PIN_5;
+    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    GPIO_InitStruct.Pin = GPIO_PIN_7;
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
   /* USER CODE END SPI1_MspInit 1 */
   }
 }
