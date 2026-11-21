@@ -33,10 +33,27 @@ def xcorr(a, b):
     return c[:len(a) - len(b) + 1]
 
 
-def analyze(samples, fs, moves, ta, tc, accel, offset, window, search=0.05):
+def bandpass(acc, fs, lo, hi):
+    f = np.fft.rfftfreq(len(acc), 1 / fs)
+    gain = (np.clip((f - lo / 2) / (lo / 2), 0, 1)
+            * np.clip((1.5 * hi - f) / (0.5 * hi), 0, 1))
+    return np.fft.irfft(np.fft.rfft(acc, axis=0) * gain[:, None],
+                        len(acc), axis=0)
+
+
+def to_mms2(samples, fs, band=None):
     acc = samples.astype(float)
     acc -= np.median(acc, axis=0)
     acc *= MG_TO_MMS2
+    if band:
+        acc = bandpass(acc, fs, *band)
+    return acc
+
+
+def analyze(samples, fs, moves, ta, tc, accel, offset, window, search=0.05,
+            band=None):
+    raw = to_mms2(samples, fs)
+    acc = bandpass(raw, fs, *band) if band else raw
 
     tmpl = move_template(ta, tc, accel, fs)
     full = np.zeros(int(round(moves[-1][0] * fs)) + len(tmpl))
@@ -49,12 +66,12 @@ def analyze(samples, fs, moves, ta, tc, accel, offset, window, search=0.05):
 
     best = None
     for ax in range(3):
-        c = xcorr(acc[:, ax], full)
+        c = xcorr(raw[:, ax], full)
         k = int(np.argmax(np.abs(c)))
         if best is None or abs(c[k]) > best[0]:
             best = (abs(c[k]), ax, k, np.sign(c[k]))
     _, ax, lag, sgn = best
-    along = acc[:, ax] * sgn
+    along = raw[:, ax] * sgn
 
     s = int(search * fs)
     drift = 0
@@ -83,6 +100,9 @@ def analyze(samples, fs, moves, ta, tc, accel, offset, window, search=0.05):
             'rms_along': al,
             'rms_cross': math.sqrt(max(total ** 2 - al ** 2, 0.)),
             'rms_total': total,
+            'start': start,
+            'stop': start + len(tmpl),
+            'window': (i0, i1),
         })
 
     fs_est = fs
